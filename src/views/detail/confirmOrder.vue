@@ -3,7 +3,7 @@
     <navBar :goback="true" :title="title"></navBar>
     <div class="main">
       <van-cell-group>
-        <van-field placeholder="方案宣言..." v-model="value" />
+        <van-field v-model="value" rows="1" autosize type="textarea" placeholder="方案宣言..." />
       </van-cell-group>
       <div class="content">
         <van-cell-group>
@@ -48,7 +48,7 @@ export default {
       checked: true,
       value: "",
       bei: "1.7",
-      loading:false
+      loading: false
     };
   },
   computed: {},
@@ -58,7 +58,7 @@ export default {
       if (this.checked == false) {
         this.bei = "";
       }
-      this.loading = true
+      this.loading = true;
       this.$SERVER
         .footBallBookOrder({
           wagers: this.$store.state.wagers,
@@ -67,13 +67,14 @@ export default {
           matchIds: this.$store.state.footId,
           bets: this.$store.state.betArr,
           describeText: this.value,
-          promiseBet: this.bei
+          promiseBet: this.bei,
+          gates: this.$store.state.gate
         })
         .then(res => {
           //下单成功
           if (res.code == 200) {
-            this.loading = false
-            this.$router.push('/orderRecord')
+            this.loading = false;
+            this.$router.push("/orderRecord");
             this.$toast.success("下单成功");
             this.$store.state.value = 1;
             for (var i = 0; i < this.$store.state.selectResult.length; i++) {
@@ -85,6 +86,8 @@ export default {
     }
   },
   created() {
+    console.log(this.$store.state.arr.join(","));
+
     for (var i = 0; i < this.$store.state.betArr.length; i++) {
       if (!this.$store.state.betArr[i]) {
         this.$store.state.betArr.splice(i, 1);
@@ -97,10 +100,6 @@ export default {
         i--;
       }
     }
-
-    // console.log(this.$store.state.betArr);
-    // console.log(this.$store.state.footId);
-    // console.log(this.$store.state.value);
   }
 };
 </script>

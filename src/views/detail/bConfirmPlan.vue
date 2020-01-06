@@ -1,6 +1,7 @@
 <template>
   <div class="container" id="shop">
     <navBar :goback="true"></navBar>
+    <p class="tie">*页面显示盘口及赔率仅供参考,请以实际票样为准</p>
     <div class="head">
       <div class="div1" @click="$router.push('/racebasketball')">+添加/编辑赛事</div>
       <div @click="removeAll">清空列表</div>
@@ -15,6 +16,12 @@
           <p></p>
         </div>
         <div class="right">
+          <div class="div1">
+            <span class="rang">{{item.num}}</span>
+            <span>{{item.acn}}(客)</span>
+            <span style="color:#777">VS</span>
+            <span>{{item.hcn}}(主)</span>
+          </div>
           <div class="tab">
             <div class="left1">
               <p class="p1">
@@ -73,17 +80,10 @@
       </div>
     </div>
     <div class="bot-btn">
-      <div class="text">
-        <span>{{zhu}}注{{this.$store.state.basketValue}}倍</span>
-        <span>
-          共
-          <span class="color">{{this.$store.state.basketMoney*this.$store.state.basketValue}}元</span>
-        </span>
-        <span>
-          [奖金范围：
-          <span class="color">{{$METHOD.format45(maxBonus*this.$store.state.basketValue,100)}}</span> 元]
-        </span>
-      </div>
+      <p class="tishi">
+        *由于店铺繁忙,本店当前最低消费
+        <span>10元</span>。
+      </p>
       <div class="con">
         <div @click="menu()">
           <span v-if="f.length==0">请选择过关方式</span>
@@ -96,10 +96,26 @@
         </div>
       </div>
       <div class="btn">
-        <van-button type="default" size="large">发起合买</van-button>
-        <van-button type="danger" size="large" @click="confirmOrder()">下一步</van-button>
+        <div class="text">
+          <p>
+            <span>{{$store.state.sumcount}}场</span>
+            <span>{{zhu}}注{{this.$store.state.value}}倍</span>
+            <span>
+              共
+              <span class="color">{{this.$store.state.money*this.$store.state.value}}元</span>
+            </span>
+          </p>
+
+          <span class="fanwei">
+            [奖金范围：
+            <span class="color">{{$METHOD.format45(maxBonus*this.$store.state.value,100)}}</span> 元]
+          </span>
+        </div>
+        <!-- <van-button type="danger" size="large" @click="confirmOrder">下一步</van-button> -->
+        <van-button round type="info" color="red" size="large" @click="confirmOrder">下一步</van-button>
       </div>
     </div>
+
     <van-action-sheet v-model="showmenu">
       <div class="content">
         <div class="head-bot">
@@ -160,6 +176,7 @@ export default {
       maxBonus: "",
       showmenu: false,
       StringMethod: [
+        "1串1",
         "2串1",
         "3串1",
         "4串1",
@@ -205,7 +222,8 @@ export default {
       i: null,
       d: [],
       c: [],
-      f: []
+      f: [],
+      flag: false
     };
   },
   computed: {},
@@ -221,44 +239,111 @@ export default {
       }
     },
     showMethod() {
-      if (this.$store.state.basketSumcount <= 2) {
+      if (this.$store.state.basketSumcount == 1) {
         return this.StringMethod.slice(0, 1);
+      } else if (this.$store.state.basketSumcount <= 2) {
+        return this.StringMethod.slice(1, 2);
       } else if (this.$store.state.basketSumcount <= 3) {
-        return this.StringMethod.slice(0, 2);
+        return this.StringMethod.slice(1, 3);
       } else if (this.$store.state.basketSumcount <= 4) {
-        return this.StringMethod.slice(0, 3);
+        return this.StringMethod.slice(1, 4);
       } else if (this.$store.state.basketSumcount <= 5) {
-        return this.StringMethod.slice(0, 4);
+        return this.StringMethod.slice(1, 5);
       } else if (this.$store.state.basketSumcount <= 6) {
-        return this.StringMethod.slice(0, 5);
+        return this.StringMethod.slice(1, 6);
       } else if (this.$store.state.basketSumcount <= 7) {
-        return this.StringMethod.slice(0, 6);
+        return this.StringMethod.slice(1, 7);
       } else if (this.$store.state.basketSumcount <= 9999) {
-        return this.StringMethod.slice(0, 7);
+        return this.StringMethod.slice(1, 8);
       }
     },
     showMethod1() {
       if (this.$store.state.basketSumcount <= 2) {
         return this.StringMethod.slice(0, 0);
       } else if (this.$store.state.basketSumcount <= 3) {
-        return this.StringMethod.slice(7, 9);
+        return this.StringMethod.slice(8, 10);
       } else if (this.$store.state.basketSumcount <= 4) {
-        return this.StringMethod.slice(7, 13);
+        return this.StringMethod.slice(8, 14);
       } else if (this.$store.state.basketSumcount <= 5) {
-        return this.StringMethod.slice(7, 19);
+        return this.StringMethod.slice(8, 20);
       } else if (this.$store.state.basketSumcount <= 6) {
-        return this.StringMethod.slice(7, 28);
+        return this.StringMethod.slice(8, 29);
       } else if (this.$store.state.basketSumcount <= 7) {
-        return this.StringMethod.slice(7, 33);
+        return this.StringMethod.slice(8, 34);
       } else if (this.$store.state.basketSumcount <= 9999) {
-        return this.StringMethod.slice(7, 39);
+        return this.StringMethod.slice(8, 40);
       }
     },
     menu() {
-      this.showmenu = true;
+      if (this.$store.state.basketSumcount == 1) {
+        var num = 0;
+        var arr = this.$store.state.basketSelectResult;
+        for (let i = 0; i < arr.length; i++) {
+          for (let j = 0; j < arr[i].length; j++) {
+            if (arr[i][j] != undefined && arr[i][j] != "") {
+              num = i;
+            }
+          }
+        }
+
+        var arrs = arr[num].slice(6, 18);
+        for (var i = 0; i < arrs.length; i++) {
+          if (!arrs[i]) {
+            arrs.splice(i, 1);
+            i--;
+          }
+        }
+        var arr1 = arr[num].slice(0, 6);
+        for (var i = 0; i < arr1.length; i++) {
+          if (!arr1[i]) {
+            arr1.splice(i, 1);
+            i--;
+          }
+        }
+        for (let j = 0; j < 6; j++) {
+          if (arr[num][j] != undefined && arr[num][j] != "") {
+            this.flag = true;
+            console.log(this.flag);
+            break;
+          }
+        }
+        if (
+          this.$store.state.basketResult[num].single == 0 &&
+          arrs.length > 0
+        ) {
+          for (let j = 6; j < 18; j++) {
+            if (arr[num][j] != undefined && arr[num][j] != "") {
+              this.flag = true;
+              console.log(this.flag);
+              break;
+            }
+          }
+        }
+        if (!this.flag) {
+          if (
+            arrs.length > 0 &&
+            this.$store.state.basketResult[num].single == 1
+          ) {
+            this.flag = false;
+          }
+        }
+      }
+      if (this.flag) {
+        this.$toast({
+          message: "非单关请选择两场比赛"
+        });
+      } else {
+        this.showmenu = true;
+      }
     },
     change(value) {
-      this.$store.state.basketValue = value;
+      if (this.value > 100000) {
+        this.$toast({
+          message: "最高输入100000倍"
+        });
+      } else {
+        this.$store.state.basketValue = value;
+      }
     },
     show(index) {
       var r = false;
@@ -376,6 +461,7 @@ export default {
           i--;
         }
       }
+       this.$store.state.basketGate = this.f;
       for (var i = 0; i < this.f.length; i++) {
         // this.f[i].substring(1, 2) = "_";
         this.f[i] = this.f[i].replace(/串/, "_");
@@ -724,6 +810,12 @@ export default {
 };
 </script>
 <style lang="less" scoped>
+.tie {
+  background-color: #b0e2ff;
+  font-size: 12px;
+  padding: 5px;
+  color: #777;
+}
 .bb {
   border: 1px solid #eeeeee;
 }
@@ -769,11 +861,12 @@ export default {
       padding-bottom: 10px;
       font-size: 14px;
       color: #4b4949;
-      width: 88%;
+      width: 100%;
     }
     .tab {
       display: flex;
       width: 5.45rem;
+      margin-left: 15px;
       .left1 {
         float: left;
         color: #4b4949;
@@ -885,12 +978,27 @@ export default {
   position: fixed;
   bottom: 0;
   width: 100%;
+  background-color: #fff;
+  .tishi {
+    font-size: 12px;
+    padding: 5px;
+    background-color: #ffdead;
+    padding-left: 20px;
+    color: #777;
+    span {
+      color: #f24a44;
+    }
+  }
   .text {
     width: 100%;
-    background-color: rgb(250, 235, 275);
+
     text-align: center;
     padding: 10px 0px;
     font-size: 12px;
+    margin-left: 60px;
+    .fanwei {
+      color: #777;
+    }
     .pei {
       color: rgb(158, 150, 145);
       padding-top: 5px;
@@ -910,6 +1018,9 @@ export default {
       height: 45px;
       line-height: 45px;
       margin: 0;
+      span {
+        font-size: 15px;
+      }
       /deep/ .van-icon-arrow-down {
         float: right;
         margin: 15px;
@@ -930,6 +1041,13 @@ export default {
   .btn {
     display: flex;
     width: 100%;
+    align-items: center;
+    /deep/ .van-button {
+      width: 150px;
+      height: 40px;
+      font-size: 14px;
+      line-height: 40px;
+    }
   }
 }
 .content {

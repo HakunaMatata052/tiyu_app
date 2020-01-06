@@ -3,7 +3,7 @@
     <navBar :goback="true" :title="title"></navBar>
     <div class="main">
       <van-cell-group>
-        <van-field placeholder="方案宣言..." v-model="value" />
+        <van-field v-model="value" rows="1" autosize type="textarea" placeholder="方案宣言..." />
       </van-cell-group>
       <div class="content">
         <van-cell-group>
@@ -62,7 +62,8 @@ export default {
           matchIds: this.$store.state.basketFootId,
           bets: this.$store.state.basketBetArr,
           describeText: this.value,
-          promiseBet: this.bei
+          promiseBet: this.bei,
+          gates: this.$store.state.basketGate
         })
         .then(res => {
           //下单成功

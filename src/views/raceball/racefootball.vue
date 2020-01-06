@@ -14,6 +14,9 @@
 
     <div class="main">
       <div class="wrap" v-for="(item1,index) in $store.state.result" :key="index">
+        <div class="dan" v-if="item1.single==1">
+          <span>单</span>
+        </div>
         <div class="title">
           <span>{{item1.date}}</span>
           <span>{{item1.num}}</span>
@@ -30,25 +33,19 @@
           </div>
           <div class="right">
             <div class="div1">
+              <span class="rang">让球</span>
               <span>{{item1.hcn}}</span>
               <span style="color:#777">VS</span>
               <span>{{item1.acnAbbr}}</span>
             </div>
             <div class="tab" v-if="item1.footBallBet">
-              <div class="left1">
-                <p class="p1">
-                  <span class="p1-first">0</span>
-                </p>
-                <p class="p2">
-                  <span :class="item1.goalline=='+1'?'p2-red':'p2-blue'">{{item1.goalline}}</span>
-                </p>
-              </div>
               <div class="center" v-if="item1.footBallBet">
-                <ul>
+                <ul :class="item1.single=='1'&& $store.state.bool==true?'bor':''">
+                  <span class="p1-first">0</span>
                   <li
                     v-for="(item,i) in item1.footBallBet"
                     :key="i"
-                    v-if="i<6"
+                    v-if="i<3"
                     :class="addColor(index,i)"
                     @click="push(index,i,item)"
                   >
@@ -56,13 +53,32 @@
                     <span v-else-if="i==1 || i==4">平</span>
                     <span v-else-if="i==2 || i==5">负</span>
                     <span>{{item}}</span>
-
-                    <!-- <span class="dan" v-if="item1.single==1">单</span> -->
+                  </li>
+                </ul>
+                <ul :class="item1.single1=='1'&& $store.state.bool==true?'bor':''">
+                  <span :class="item1.goalline=='+1'?'p2-red':'p2-blue'">{{item1.goalline}}</span>
+                  <li
+                    v-for="(item,i) in item1.footBallBet"
+                    :key="i"
+                    v-if="i>=3 && i<6"
+                    :class="addColor(index,i)"
+                    @click="push(index,i,item)"
+                  >
+                    <span v-if="i==0 || i==3">胜</span>
+                    <span v-else-if="i==1 || i==4">平</span>
+                    <span v-else-if="i==2 || i==5">负</span>
+                    <span>{{item}}</span>
                   </li>
                 </ul>
               </div>
-              <div class="right1">
-                <span :class="bgc(index)" @click="$router.push('/allplay/'+index)">{{coun(index)}}</span>
+              <div
+                class="right1"
+                :class="(item1.single=='1' ||item1.single1=='1' ||item1.single2=='1' ||item1.single3=='1' ||item1.single4=='1') && $store.state.bool==true?'bor':''"
+              >
+                <span
+                  :class="bgc(item1,index)"
+                  @click="$router.push('/allplay/'+index)"
+                >{{coun(index)}}</span>
               </div>
             </div>
           </div>
@@ -70,14 +86,37 @@
       </div>
       <!-- 底部按钮 -->
       <div class="bot-btn">
-        <div class="text">
+        <div class="check">
+          <van-checkbox
+            v-model="checked"
+            shape="square"
+            checked-color="#FFA500"
+            @change="chek"
+          >显示固定单关(橙色框内)</van-checkbox>
+        </div>
+        <!-- <div class="text">
           <p v-if="$store.state.sumcount==0">至少选择2场比赛</p>
           <p v-if="$store.state.sumcount>=1">已选择{{$store.state.sumcount}}场比赛</p>
           <p class="pei">[页面赔率仅供参考,请以实体票为准]</p>
-        </div>
+        </div>-->
         <div class="btn">
-          <van-button type="default" size="large">清空</van-button>
-          <van-button type="danger" size="large" @click="confirm">确定</van-button>
+          <div class="delete" @click="del">
+            <p>
+              <van-icon name="delete" size="19px" />
+            </p>
+            <p>清空</p>
+          </div>
+          <div>
+            <p v-if="$store.state.sumcount==0">至少选择2场比赛</p>
+            <p v-if="$store.state.sumcount>=1">已选择{{$store.state.sumcount}}场比赛</p>
+          </div>
+          <div>
+            <!-- <van-button type="danger" size="large" @click="confirm">确定</van-button> -->
+            <van-button round type="danger" @click="confirm" size="small">确定</van-button>
+          </div>
+
+          <!-- <van-button type="default" size="large">清空</van-button>
+          <van-button type="danger" size="large" >确定</van-button>-->
         </div>
       </div>
       <!-- 下拉菜单 -->
@@ -131,13 +170,30 @@ export default {
   data() {
     return {
       a: "",
-      count: 0
+      count: 0,
+      checked: true,
+      flag: false
     };
   },
   mounted() {},
   methods: {
+    chek() {
+      if (this.checked == true) {
+        this.$store.state.bool = true;
+      } else {
+        this.$store.state.bool = false;
+      }
+    },
+    del() {
+      for (var i = 0; i < this.$store.state.selectResult.length; i++) {
+        for (let j = 0; j < this.$store.state.selectResult[i].length; j++) {
+          this.$store.state.selectResult[i][j] = "";
+        }
+      }
+      this.$store.state.sumcount = 0;
+      this.getList();
+    },
     go(item) {
-      console.log(item);
       this.$router.push({
         name: "matchFenxi",
         params: {
@@ -165,36 +221,161 @@ export default {
           message: "非单关至少选择两场比赛"
         });
       }
-
       if (this.$store.state.sumcount == 1) {
-        var i1 = 0;
-        var arr = JSON.parse(JSON.stringify(this.$store.state.selectResult));
-        for (var i = 0; i < arr.length; i++) {
-          for (var j = 0; j < arr[i].length; j++) {
-            if (arr[i][j] == "" || arr[i][j] == undefined) {
-              arr[i].splice(j, 1);
-              j--;
+        var num = 0;
+        var arr = this.$store.state.selectResult;
+
+        for (let i = 0; i < arr.length; i++) {
+          for (let j = 0; j < arr[i].length; j++) {
+            if (arr[i][j] != undefined && arr[i][j] != "") {
+              num = i;
             }
           }
         }
-        for (var i = 0; i < arr.length; i++) {
-          if (arr[i].length > 0) {
-            i1 = i;
+
+        var arrs = arr[num].slice(0, 3);
+        for (var i = 0; i < arrs.length; i++) {
+          if (!arrs[i]) {
+            arrs.splice(i, 1);
+            i--;
           }
         }
-        if (
-          this.$store.state.result[i1].single == 1 ||
-          this.$store.state.result[i1].single1 == 1 ||
-          this.$store.state.result[i1].single2 == 1 ||
-          this.$store.state.result[i1].single3 == 1 ||
-          this.$store.state.result[i1].single4 == 1
-        ) {
+
+        var arr1 = arr[num].slice(3, 6);
+
+        for (var i = 0; i < arr1.length; i++) {
+          if (!arr1[i]) {
+            arr1.splice(i, 1);
+            i--;
+          }
+        }
+        var arr2 = arr[num].slice(6, 14);
+
+        for (var i = 0; i < arr2.length; i++) {
+          if (!arr2[i]) {
+            arr2.splice(i, 1);
+            i--;
+          }
+        }
+        var arr3 = arr[num].slice(14, 23);
+
+        for (var i = 0; i < arr3.length; i++) {
+          if (!arr3[i]) {
+            arr3.splice(i, 1);
+            i--;
+          }
+        }
+        var arr4 = arr[num].slice(23, 54);
+
+        for (var i = 0; i < arr4.length; i++) {
+          if (!arr4[i]) {
+            arr4.splice(i, 1);
+            i--;
+          }
+        }
+
+        if (this.$store.state.result[num].single == 0 && arrs.length > 0) {
+          for (let j = 0; j < 3; j++) {
+            if (arr[num][j] != undefined && arr[num][j] != "") {
+              this.flag = true;
+
+              break;
+            }
+          }
+        }
+        if (!this.flag) {
+          if (arrs.length > 0 && this.$store.state.result[num].single == 1) {
+            this.flag = false;
+          }
+        }
+
+        if (this.$store.state.result[num].single1 == 0 && arr1.length > 0) {
+          for (let j = 3; j < 6; j++) {
+            if (arr[num][j] != undefined && arr[num][j] != "") {
+              this.flag = true;
+
+              break;
+            }
+          }
+        }
+        if (!this.flag) {
+          if (arr1.length > 0 && this.$store.state.result[num].single1 == 1) {
+            this.flag = false;
+          }
+        }
+
+        if (this.$store.state.result[num].single2 == 0 && arr2.length > 0) {
+          for (let j = 6; j < 14; j++) {
+            if (arr[num][j] != undefined && arr[num][j] != "") {
+              this.flag = true;
+              break;
+            }
+          }
+        }
+        if (!this.flag) {
+          if (arr2.length > 0 && this.$store.state.result[num].single2 == 1) {
+            this.flag = false;
+          }
+        }
+
+        if (this.$store.state.result[num].single3 == 0 && arr3.length > 0) {
+          for (let j = 14; j < 23; j++) {
+            if (arr[num][j] != undefined && arr[num][j] != "") {
+              this.flag = true;
+
+              break;
+            }
+          }
+        }
+        if (!this.flag) {
+          if (arr3.length > 0 && this.$store.state.result[num].single3 == 1) {
+            this.flag = false;
+          }
+        }
+
+        if (this.$store.state.result[num].single4 == 0 && arr4.length > 0) {
+          for (let j = 23; j < 54; j++) {
+            if (arr[num][j] != undefined && arr[num][j] != "") {
+              this.flag = true;
+
+              break;
+            }
+          }
+        }
+        if (!this.flag) {
+          if (arr4.length > 0 && this.$store.state.result[num].single4 == 1) {
+            this.flag = false;
+          }
+        }
+
+        // if (this.$store.state.result[num].single == 1 && arrs.length > 0) {
+        //   this.flag = false;
+        // }
+        // if (this.$store.state.result[num].single1 == 1 && arr1.length > 0) {
+        //   this.flag = false;
+        // }
+        // if (this.$store.state.result[num].single2 == 1 && arr2.length > 0) {
+        //   this.flag = false;
+        // }
+        // if (this.$store.state.result[num].single3 == 1 && arr3.length > 0) {
+        //   this.flag = false;
+        // }
+        // if (this.$store.state.result[num].single4 == 1 && arr4.length > 0) {
+        //   this.flag = false;
+        // }
+      }
+
+      this.$store.state.flag = this.flag;
+
+      if (this.$store.state.sumcount == 1) {
+        if (!this.$store.state.flag) {
           this.$router.push("/confirmPlan");
           this.$toast({
             message: "进入单关模式"
           });
         }
       }
+      this.flag = false;
     },
     show(index) {
       var r = false;
@@ -205,11 +386,11 @@ export default {
       });
       return this.$store.state.selectResult[index];
     },
-    bgc(index) {
-      if (this.coun(index) == "更多玩法") {
+    bgc(item, index) {
+      if (this.coun(index) == "更多") {
         return "";
       } else {
-        return "bgColor";
+        return "bgColor1";
       }
     },
     coun(index) {
@@ -230,7 +411,7 @@ export default {
         }
       }
       if (arr.length == 0) {
-        return "更多玩法";
+        return "更多";
       }
       return "已选" + arr.length + "项";
     },
@@ -245,14 +426,14 @@ export default {
         return "bgColor";
       }
     },
-    push(index, i, val) {
+    push(index, ii, val) {
       if (
-        this.$store.state.selectResult[index][i] == undefined ||
-        this.$store.state.selectResult[index][i] == ""
+        this.$store.state.selectResult[index][ii] == undefined ||
+        this.$store.state.selectResult[index][ii] == ""
       ) {
-        this.$set(this.$store.state.selectResult[index], i, val);
+        this.$set(this.$store.state.selectResult[index], ii, val);
       } else {
-        this.$set(this.$store.state.selectResult[index], i, "");
+        this.$set(this.$store.state.selectResult[index], ii, "");
       }
       var arr = JSON.parse(JSON.stringify(this.$store.state.selectResult));
       for (var i = 0; i < arr.length; i++) {
@@ -272,6 +453,83 @@ export default {
       }
 
       this.$store.state.sumcount = arr.length;
+
+      // if (this.$store.state.sumcount == 1) {
+      //   if (this.$store.state.result[index].single == 0 && ii < 3) {
+      //     for (let i = 0; i < 3; i++) {
+      //       if (
+      //         this.$store.state.selectResult[index][ii] != undefined ||
+      //         this.$store.state.selectResult[index][ii] != ""
+      //       ) {
+      //         this.$store.state.flag = true;
+      //         break;
+      //       }
+      //       var arr2 = JSON.parse(
+      //         JSON.stringify(this.$store.state.selectResult[index].slice(0, 3))
+      //       );
+      //       for (var i = 0; i < arr2.length; i++) {
+      //         if (arr2[i].length == 0) {
+      //           arr2.splice(i, 1);
+      //           i--;
+      //         }
+      //       }
+      //       if (arr2.length == 0) {
+      //         this.$store.state.flag = false;
+      //       }
+      //     }
+      //   }
+      //   if (this.$store.state.result[index].single1 == 0 && ii >= 3 && ii < 6) {
+      //     for (let i = 0; i < 3; i++) {
+      //       if (
+      //         this.$store.state.selectResult[index][ii] != undefined ||
+      //         this.$store.state.selectResult[index][ii] != ""
+      //       ) {
+      //         this.$store.state.flag = true;
+      //         break;
+      //       }
+      //     }
+      //     var arr1 = JSON.parse(
+      //       JSON.stringify(this.$store.state.selectResult[index].slice(3, 6))
+      //     );
+      //     for (var i = 0; i < arr1.length; i++) {
+      //       if (arr1[i].length == 0) {
+      //         arr1.splice(i, 1);
+      //         i--;
+      //       }
+      //     }
+      //     if (arr1.length == 0) {
+      //       this.$store.state.flag = false;
+      //     }
+      //   }
+
+      //   if (this.$store.state.flag == false) {
+      //     if (this.$store.state.result[index].single == 1 && ii < 3) {
+      //       for (let i = 0; i < 3; i++) {
+      //         if (
+      //           this.$store.state.selectResult[index][ii] != undefined ||
+      //           this.$store.state.selectResult[index][ii] != ""
+      //         ) {
+      //           break;
+      //         }
+      //       }
+      //     }
+
+      //     if (
+      //       this.$store.state.result[index].single1 == 1 &&
+      //       ii >= 3 &&
+      //       ii < 6
+      //     ) {
+      //       for (let i = 3; i < 6; i++) {
+      //         if (
+      //           this.$store.state.selectResult[index][ii] != undefined ||
+      //           this.$store.state.selectResult[index][ii] != ""
+      //         ) {
+      //           break;
+      //         }
+      //       }
+      //     }
+      //   }
+      // }
     },
     getList() {
       var that = this;
@@ -516,7 +774,6 @@ export default {
               };
             });
             this.$store.state.result = arr;
-            console.log(this.$store.state.result);
           }
         });
     }
@@ -544,10 +801,20 @@ export default {
 };
 </script>
 <style lang="less" scoped>
+.bor {
+  border: 1px solid orange !important;
+}
 .bgColor {
   background-color: red;
   color: white !important;
   text-align: center !important;
+}
+.bgColor1 {
+  background-color: red;
+  color: white !important;
+  text-align: center !important;
+  height: 1.24rem !important;
+  line-height: 32px !important;
 }
 // 修改vant ui内置样式
 .menu {
@@ -581,15 +848,32 @@ export default {
 
 .main {
   padding-bottom: 120px;
-
+  background-color: #fff;
   .title {
     color: #4b4949;
     text-align: center;
-    margin-top: 10px;
+    padding-top: 8px;
     font-size: 13px;
   }
   .wrap {
     position: relative;
+    .dan {
+      font-size: 12px;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 0;
+      height: 0;
+      border-top: 25px solid rgb(255, 187, 0);
+      border-right: 25px solid transparent;
+      span {
+        display: inline-block;
+
+        position: absolute;
+        width: 14px;
+        top: -25px;
+      }
+    }
   }
   .test {
     padding: 15px 10px;
@@ -601,20 +885,24 @@ export default {
 
     .right {
       font-size: 14px;
-      width: 80%;
+      width: 77%;
+      margin-right: 10px;
       .div1 {
         display: flex;
-        justify-content: space-around;
-        padding: 0 20px 15px;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px 0;
 
+        margin-right: 46px;
         color: #4b4949;
-        span {
-          display: inline-block;
-          width: 33%;
-          text-align: center;
+        .rang {
+          width: 15px;
+          color: #777;
         }
       }
       .tab {
+        display: flex;
+        align-items: center;
         .left1 {
           float: left;
           color: #4b4949;
@@ -658,8 +946,46 @@ export default {
         }
         .center {
           font-size: 12px;
+          width: 238px;
 
           ul {
+            width: 100%;
+            height: 32px;
+            border: 1px solid #ffffff;
+            border-bottom: none;
+            &:last-child {
+              border-top: none;
+            }
+            .p1-first {
+              background-color: rgb(204, 204, 204);
+              color: white;
+              display: inline-block;
+              width: 22px;
+              height: 32px;
+              float: left;
+              text-align: center;
+              line-height: 32px;
+            }
+            .p2-red {
+              background-color: #f00;
+              color: white;
+              display: inline-block;
+              width: 22px;
+              height: 32px;
+              float: left;
+              text-align: center;
+              line-height: 32px;
+            }
+            .p2-blue {
+              background-color: green;
+              color: white;
+              display: inline-block;
+              width: 22px;
+              height: 32px;
+              float: left;
+              text-align: center;
+              line-height: 32px;
+            }
             li {
               display: inline-block;
               height: 30px;
@@ -672,13 +998,6 @@ export default {
               & span:nth-child(2) {
                 color: #777;
               }
-
-              .dan {
-                position: absolute;
-                top: -18px;
-                left: 0;
-                color: rgb(255, 187, 0);
-              }
             }
           }
         }
@@ -688,10 +1007,12 @@ export default {
             display: inline-block;
             height: 62px;
             width: 31px;
-            border: 1px solid #eeeeee;
-            line-height: 30px;
+
+            line-height: 62px;
             font-size: 12px;
             color: #777;
+            text-align: center;
+            border: 1px solid #eee;
           }
         }
       }
@@ -789,12 +1110,26 @@ export default {
     .btn {
       display: flex;
       justify-content: space-between;
+      align-items: center;
     }
   }
   .bot-btn {
     position: fixed;
     bottom: 0;
     width: 100%;
+    background-color: #fff;
+    border-top: 1px solid #ccc;
+    .check {
+      width: 100%;
+      background-color: #fff;
+      text-align: center;
+      padding: 8px 25%;
+
+      /deep/ .van-checkbox__label {
+        font-size: 14px;
+        color: orange;
+      }
+    }
     .text {
       width: 100%;
       background-color: rgb(250, 235, 275);
@@ -807,8 +1142,19 @@ export default {
       }
     }
     .btn {
-      display: flex;
       width: 100%;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      color: #4b4949;
+      font-size: 13px;
+      padding-bottom: 8px;
+      .delete {
+        text-align: center;
+        p {
+          color: #777;
+        }
+      }
     }
   }
 

@@ -1,10 +1,12 @@
 <template>
   <div class="container" id="shop">
     <navBar :goback="true"></navBar>
+    <p class="tie">*页面显示盘口及赔率仅供参考,请以实际票样为准</p>
     <div class="head">
       <div class="div1" @click="$router.push('/racefootball')">+添加/编辑赛事</div>
       <div @click="removeAll">清空列表</div>
     </div>
+
     <div class="main">
       <div class="test" v-for="(item,index) in list" :key="index" v-if="show(index)">
         <div class="left">
@@ -15,6 +17,12 @@
           <p></p>
         </div>
         <div class="right">
+          <div class="div1">
+            <span class="rang">{{item.num}}</span>
+            <span>[主]{{item.hcn}}</span>
+            <span style="color:#777">VS</span>
+            <span>[客]{{item.acnAbbr}}</span>
+          </div>
           <div class="tab">
             <div class="left1">
               <p class="p1">
@@ -109,17 +117,10 @@
       </div>
     </div>
     <div class="bot-btn">
-      <div class="text">
-        <span>{{zhu}}注{{this.$store.state.value}}倍</span>
-        <span>
-          共
-          <span class="color">{{this.$store.state.money*this.$store.state.value}}元</span>
-        </span>
-        <span>
-          [奖金范围：
-          <span class="color">{{$METHOD.format45(maxBonus*this.$store.state.value,100)}}</span> 元]
-        </span>
-      </div>
+      <p class="tishi">
+        *由于店铺繁忙,本店当前最低消费
+        <span>10元</span>。
+      </p>
       <div class="con">
         <div @click="menu()">
           <span v-if="f.length==0">请选择过关方式</span>
@@ -132,8 +133,23 @@
         </div>
       </div>
       <div class="btn">
-        <van-button type="default" size="large">发起合买</van-button>
-        <van-button type="danger" size="large" @click="confirmOrder">下一步</van-button>
+        <div class="text">
+          <p>
+            <span>{{$store.state.sumcount}}场</span>
+            <span>{{zhu}}注{{this.$store.state.value}}倍</span>
+            <span>
+              共
+              <span class="color">{{this.$store.state.money*this.$store.state.value}}元</span>
+            </span>
+          </p>
+
+          <span class="fanwei">
+            [奖金范围：
+            <span class="color">{{$METHOD.format45(maxBonus*this.$store.state.value,100)}}</span> 元]
+          </span>
+        </div>
+        <!-- <van-button type="danger" size="large" @click="confirmOrder">下一步</van-button> -->
+        <van-button round type="info" color="red" size="large" @click="confirmOrder">下一步</van-button>
       </div>
     </div>
     <van-action-sheet v-model="showmenu">
@@ -191,7 +207,7 @@ export default {
       a: "",
       bet: [],
       value: 1,
-      zhu: "",
+      zhu: 0,
       money: "",
       maxBonus: "",
       showmenu: false,
@@ -242,7 +258,8 @@ export default {
       i: null,
       d: [],
       c: [],
-      f: []
+      f: [],
+      flag: false
     };
   },
   computed: {},
@@ -258,6 +275,13 @@ export default {
       }
     },
     confirmOrder() {
+      console.log(this.$store.state.selectResult);
+      if (this.$store.state.money * this.$store.state.value < 10) {
+        this.$toast({
+          message: "投注金额不能小于10元"
+        });
+        return;
+      }
       if (this.f.length == 0) {
         this.$toast({
           message: "请选择串法"
@@ -295,7 +319,7 @@ export default {
       }
     },
     showMethod() {
-      if (this.$store.state.sumcount <= 1) {
+      if (this.$store.state.sumcount == 1) {
         return this.StringMethod.slice(0, 1);
       } else if (this.$store.state.sumcount <= 2) {
         return this.StringMethod.slice(1, 2);
@@ -331,10 +355,159 @@ export default {
       }
     },
     menu() {
-      this.showmenu = true;
+      if (this.$store.state.sumcount == 1) {
+        var num = 0;
+        var arr = this.$store.state.selectResult;
+
+        for (let i = 0; i < arr.length; i++) {
+          for (let j = 0; j < arr[i].length; j++) {
+            if (arr[i][j] != undefined && arr[i][j] != "") {
+              num = i;
+            }
+          }
+        }
+
+        var arrs = arr[num].slice(0, 3);
+        for (var i = 0; i < arrs.length; i++) {
+          if (!arrs[i]) {
+            arrs.splice(i, 1);
+            i--;
+          }
+        }
+        console.log(arrs);
+
+        var arr1 = arr[num].slice(3, 6);
+
+        for (var i = 0; i < arr1.length; i++) {
+          if (!arr1[i]) {
+            arr1.splice(i, 1);
+            i--;
+          }
+        }
+        var arr2 = arr[num].slice(6, 14);
+
+        for (var i = 0; i < arr2.length; i++) {
+          if (!arr2[i]) {
+            arr2.splice(i, 1);
+            i--;
+          }
+        }
+        var arr3 = arr[num].slice(14, 23);
+
+        for (var i = 0; i < arr3.length; i++) {
+          if (!arr3[i]) {
+            arr3.splice(i, 1);
+            i--;
+          }
+        }
+        var arr4 = arr[num].slice(23, 54);
+
+        for (var i = 0; i < arr4.length; i++) {
+          if (!arr4[i]) {
+            arr4.splice(i, 1);
+            i--;
+          }
+        }
+        console.log(this.$store.state.result[num]);
+        if (this.$store.state.result[num].single == 0 && arrs.length > 0) {
+          for (let j = 0; j < 3; j++) {
+            if (arr[num][j] != undefined && arr[num][j] != "") {
+              this.flag = true;
+              console.log(this.flag);
+              break;
+            }
+          }
+        }
+        if (!this.flag) {
+          if (arrs.length > 0 && this.$store.state.result[num].single == 1) {
+            this.flag = false;
+          }
+        }
+
+        if (this.$store.state.result[num].single1 == 0 && arr1.length > 0) {
+          for (let j = 3; j < 6; j++) {
+            if (arr[num][j] != undefined && arr[num][j] != "") {
+              this.flag = true;
+              console.log(this.flag);
+              break;
+            }
+          }
+        }
+        if (!this.flag) {
+          if (arr1.length > 0 && this.$store.state.result[num].single1 == 1) {
+            this.flag = false;
+            console.log(this.flag);
+          }
+        }
+
+        if (this.$store.state.result[num].single2 == 0 && arr2.length > 0) {
+          for (let j = 6; j < 14; j++) {
+            if (arr[num][j] != undefined && arr[num][j] != "") {
+              this.flag = true;
+              break;
+            }
+          }
+        }
+        if (!this.flag) {
+          if (arr2.length > 0 && this.$store.state.result[num].single2 == 1) {
+            this.flag = false;
+            console.log(this.flag);
+          }
+        }
+
+        if (this.$store.state.result[num].single3 == 0 && arr3.length > 0) {
+          for (let j = 14; j < 23; j++) {
+            if (arr[num][j] != undefined && arr[num][j] != "") {
+              this.flag = true;
+              console.log(this.flag);
+
+              break;
+            }
+          }
+        }
+        if (!this.flag) {
+          if (arr3.length > 0 && this.$store.state.result[num].single3 == 1) {
+            this.flag = false;
+            console.log(this.flag);
+          }
+        }
+
+        if (this.$store.state.result[num].single4 == 0 && arr4.length > 0) {
+          for (let j = 23; j < 54; j++) {
+            if (arr[num][j] != undefined && arr[num][j] != "") {
+              this.flag = true;
+              console.log(this.flag);
+
+              break;
+            }
+          }
+        }
+        if (!this.flag) {
+          if (arr4.length > 0 && this.$store.state.result[num].single4 == 1) {
+            this.flag = false;
+            console.log(this.flag);
+          }
+        }
+
+        console.log(this.flag);
+      }
+
+      if (this.flag) {
+        this.$toast({
+          message: "非单关请选择两场比赛"
+        });
+      } else {
+        this.showmenu = true;
+      }
     },
     change(value) {
-      this.$store.state.value = value;
+      if (this.value > 100000) {
+        this.$toast({
+          message: "最高输入100000倍"
+        });
+      } else {
+        this.$store.state.value = value;
+      }
     },
     show(index) {
       var r = false;
@@ -357,10 +530,10 @@ export default {
     },
     removeFootball(index) {
       this.$store.state.selectResult[index] = [];
+
       this.getMoney();
       this.confirm();
       this.$store.state.sumcount--;
-
       this.f = [];
     },
     show1(index) {
@@ -397,14 +570,14 @@ export default {
         return "bgColor";
       }
     },
-    push(index, i, val) {
+    push(index, ii, val) {
       if (
-        this.$store.state.selectResult[index][i] == undefined ||
-        this.$store.state.selectResult[index][i] == ""
+        this.$store.state.selectResult[index][ii] == undefined ||
+        this.$store.state.selectResult[index][ii] == ""
       ) {
-        this.$set(this.$store.state.selectResult[index], i, val);
+        this.$set(this.$store.state.selectResult[index], ii, val);
       } else {
-        this.$set(this.$store.state.selectResult[index], i, "");
+        this.$set(this.$store.state.selectResult[index], ii, "");
       }
       var arr = JSON.parse(JSON.stringify(this.$store.state.selectResult));
       for (var i = 0; i < arr.length; i++) {
@@ -424,6 +597,57 @@ export default {
       }
 
       this.$store.state.sumcount = arr.length;
+
+      if (this.$store.state.sumcount == 1) {
+        if (this.$store.state.result[index].single == 0 && ii < 3) {
+          for (let i = 0; i < 3; i++) {
+            if (
+              this.$store.state.selectResult[index][ii] != undefined ||
+              this.$store.state.selectResult[index][ii] != ""
+            ) {
+              this.flag = true;
+              break;
+            }
+            var arr2 = JSON.parse(
+              JSON.stringify(this.$store.state.selectResult[index].slice(0, 3))
+            );
+            for (var i = 0; i < arr2.length; i++) {
+              if (arr2[i].length == 0) {
+                arr2.splice(i, 1);
+                i--;
+              }
+            }
+            if (arr2.length == 0) {
+              this.flag = false;
+            }
+          }
+        }
+        if (this.$store.state.result[index].single1 == 0 && ii >= 3 && ii < 6) {
+          for (let i = 0; i < 3; i++) {
+            if (
+              this.$store.state.selectResult[index][ii] != undefined ||
+              this.$store.state.selectResult[index][ii] != ""
+            ) {
+              this.flag = true;
+              break;
+            }
+          }
+          var arr1 = JSON.parse(
+            JSON.stringify(this.$store.state.selectResult[index].slice(3, 6))
+          );
+          for (var i = 0; i < arr1.length; i++) {
+            if (arr1[i].length == 0) {
+              arr1.splice(i, 1);
+              i--;
+            }
+          }
+          if (arr1.length == 0) {
+            this.flag = false;
+          }
+
+          this.$store.state.flag = this.flag;
+        }
+      }
       this.getMoney();
       this.confirm();
       this.f = [];
@@ -447,16 +671,19 @@ export default {
     },
     confirm() {
       this.f = [...this.b, ...this.c];
+
       for (var i = 0; i < this.f.length; i++) {
         if (!this.f[i]) {
           this.f.splice(i, 1);
           i--;
         }
       }
+      this.$store.state.gate = this.f;
       for (var i = 0; i < this.f.length; i++) {
         // this.f[i].substring(1, 2) = "_";
         this.f[i] = this.f[i].replace(/串/, "_");
       }
+
       this.showmenu = false;
       this.getMoney();
       this.b = [];
@@ -468,13 +695,13 @@ export default {
           num++;
         }
       }
-      if (num > 5) {
-        this.$toast({
-          message: "组合过关最多选择五个"
-        });
-        this.b = [];
-        return;
-      }
+      // if (num > 5) {
+      //   this.$toast({
+      //     message: "组合过关最多选择五个"
+      //   });
+      //   this.b = [];
+      //   return;
+      // }
       var resu = [];
       for (var i = 0; i < this.$store.state.result.length; i++) {
         if (this.show(i)) {
@@ -511,7 +738,8 @@ export default {
         }
         arr.push([a, b, c, d, e]);
       }
-
+      this.$store.state.arr = arr;
+      console.log(arr);
       //   var arr = JSON.parse(JSON.stringify(this.$store.state.selectResult));
       //   for (var i = 0; i < arr.length; i++) {
       //     for (var j = 0; j < arr[i].length; j++) {
@@ -555,9 +783,9 @@ export default {
           }
         }
       }
-      console.log(arr);
+
       var gate = this.f;
-      console.log(gate);
+
       function arrcl(arr, n, z) {
         var r = [];
         fn([], arr, n);
@@ -734,25 +962,11 @@ export default {
         }
       }
       var source = this.$store.state.betArr;
-      // var arr = [
-      //   [["0_1"]], //二维数组中的每一项数组，中的所有项排序为 1-54，共54项
-      //   [["1_1"]],
-      //   [["2_1"]],
-      //   [["3_1"]],
-      //   [["4_1"]],
-      //   [["5_1"]],
-      //   [["6_1"]],
-      //   [["7_1"]],
-      //   [["8_1"]],
-      //   [["9_1"]]
-      // ];
-      console.log(arr);
-
       function parse(data, source) {
         //取几串几 ，二维数组的行(如[1,2,3]2串1，组合为[[1,2],[1,3],[2,3]])
-        if (data.length == 0 || source.length == 0) {
-          return;
-        }
+        // if (data.length == 0 || source.length == 0) {
+        //   return;
+        // }
         var bisai = [];
         var wagers = 0;
         var result = {};
@@ -821,6 +1035,12 @@ export default {
 };
 </script>
 <style lang="less" scoped>
+.tie {
+  background-color: #b0e2ff;
+  font-size: 12px;
+  padding: 5px;
+  color: #777;
+}
 .aa {
   display: none;
 }
@@ -864,7 +1084,7 @@ export default {
       padding-bottom: 10px;
       font-size: 14px;
       color: #4b4949;
-      width: 88%;
+      width: 100%;
     }
     .tab {
       display: flex;
@@ -982,12 +1202,27 @@ export default {
   position: fixed;
   bottom: 0;
   width: 100%;
+  background-color: #fff;
+  .tishi {
+    font-size: 12px;
+    padding: 5px;
+    background-color: #ffdead;
+    padding-left: 20px;
+    color: #777;
+    span {
+      color: #f24a44;
+    }
+  }
   .text {
     width: 100%;
-    background-color: rgb(250, 235, 275);
+
     text-align: center;
     padding: 10px 0px;
     font-size: 12px;
+    margin-left: 60px;
+    .fanwei {
+      color: #777;
+    }
     .pei {
       color: rgb(158, 150, 145);
       padding-top: 5px;
@@ -1007,6 +1242,9 @@ export default {
       height: 45px;
       line-height: 45px;
       margin: 0;
+      span {
+        font-size: 15px;
+      }
       /deep/ .van-icon-arrow-down {
         float: right;
         margin: 15px;
@@ -1027,6 +1265,13 @@ export default {
   .btn {
     display: flex;
     width: 100%;
+    align-items: center;
+    /deep/ .van-button {
+      width: 150px;
+      height: 40px;
+      font-size: 14px;
+      line-height: 40px;
+    }
   }
 }
 .content {

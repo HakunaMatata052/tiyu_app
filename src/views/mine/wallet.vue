@@ -21,24 +21,27 @@
     </div>
 
     <div class="main">
-      <van-list v-model="loading" :finished="finished" finished-text="没有更多了" @load="getList">
-        <div class="content" v-for="(item,index) in list" :key="index">
-          <div class="wrap">
-            <div class="time">
-              <span>{{$METHOD.format(item.time/1000,'MM-dd hh:mm')}}</span>
-            </div>
-            <div class="text">
-              <p class="mon">{{item.coin}}</p>
-
-              <p v-if="item.currentBalance">账户余额:{{item.currentBalance}}</p>
-              <p class="type">余额支付,订单[{{item.forId}}],支付{{item.coin}}元</p>
-            </div>
-            <div class="bot">
-              <span>类型:{{item.remark}}</span>
+      <van-pull-refresh v-model="isLoading" @refresh="onRefresh">
+        <van-list v-model="loading" :finished="finished" finished-text="没有更多了" @load="onLoad">
+          <div class="content" v-for="(item,index) in list" :key="index">
+            <div class="wrap">
+              <div class="time">
+                <span>{{$METHOD.format(item.time/1000,'MM-dd hh:mm')}}</span>
+              </div>
+              <div class="text">
+                <p class="mon" v-if="item.coin<0">{{item.coin}}</p>
+                <p class="mon1" v-else>+{{item.coin}}</p>
+                <p v-if="item.currentBalance">账户余额:{{item.currentBalance}}</p>
+                <p class="type" v-if="item.coin<0">余额支付,订单[{{item.forId}}],支付{{item.coin}}元</p>
+                <p class="type" v-else>余额支付,订单[{{item.forId}}],收入{{item.coin}}元</p>
+              </div>
+              <div class="bot">
+                <span>类型:{{item.remark}}</span>
+              </div>
             </div>
           </div>
-        </div>
-      </van-list>
+        </van-list>
+      </van-pull-refresh>
     </div>
   </div>
 </template>
@@ -54,12 +57,36 @@ export default {
     return {
       finished: false,
       loading: false,
+      isLoading: false,
       list: [],
       page: 1,
       sum: 0
     };
   },
   methods: {
+    onRefresh() {
+      this.page = 1;
+      this.finished = false;
+      this.getList();
+    },
+    onLoad() {
+      this.page++;
+      let that = this;
+      this.$SERVER
+        .getUserWalletExchangeHIstory({
+          userId: that.$store.state.userInfo.userId,
+          pagenum: that.page,
+          pagesize: 10
+        })
+        .then(res => {
+          that.list = [...that.list, ...res.data.list];
+          that.loading = false;
+
+          if (!res.data.hasNextPage) {
+            that.finished = true;
+          }
+        });
+    },
     getList() {
       this.$SERVER
         .getUserWalletExchangeHIstory({
@@ -68,10 +95,10 @@ export default {
           pagesize: 10
         })
         .then(res => {
-          this.list = [...this.list, ...res.data.list];
-          this.loading = false;
-          this.page++;
-          if (!res.data.hasNextPage) {
+          this.list = res.data.list;
+          this.isLoading = false;
+
+          if (res.data.hasNextPage == false) {
             this.finished = true;
           }
         });
@@ -92,7 +119,9 @@ export default {
       });
     }
   },
-  created() {}
+  created() {
+    this.getList();
+  }
 };
 </script>
 
@@ -150,6 +179,9 @@ export default {
       width: 54%;
       .mon {
         color: #f24a44;
+      }
+      .mon1 {
+        color: #00cd66;
       }
     }
     .bot {

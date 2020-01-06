@@ -6,9 +6,6 @@
         <span>VS</span>
         <span>{{list.acnAbbr}}</span>
       </div>
-      <div class="right" slot="right">
-        <span class="fenxi">分析</span>
-      </div>
     </navBar>
     <div class="main">
       <h3>胜平负/让球</h3>
@@ -19,11 +16,25 @@
         </div>
 
         <div class="right">
-          <ul>
+          <ul :class="list.single=='1'&& $store.state.bool==true?'bor':''">
             <li
               v-for="(item,i) in list.footBallBet"
               :key="i"
-              v-if="i<6"
+              v-if="i<3"
+              :class="addColor(i)"
+              @click="push(i,item)"
+            >
+              <span v-if="i==0 || i==3">胜</span>
+              <span v-else-if="i==1 || i==3">平</span>
+              <span v-else-if="i==2 || i==3">负</span>
+              <span>{{item}}</span>
+            </li>
+          </ul>
+          <ul :class="list.single1=='1'&& $store.state.bool==true?'bor':''">
+            <li
+              v-for="(item,i) in list.footBallBet"
+              :key="i"
+              v-if="i>=3 && i<6"
               :class="addColor(i)"
               @click="push(i,item)"
             >
@@ -36,7 +47,7 @@
         </div>
       </div>
       <h3>总进球</h3>
-      <div class="second">
+      <div class="second" :class="list.single2=='1'&& $store.state.bool==true?'bor':''">
         <div class="left">
           <p class="p1">总进球</p>
         </div>
@@ -63,7 +74,7 @@
         </div>
       </div>
       <h3>半全场</h3>
-      <div class="third">
+      <div class="third" :class="list.single3=='1'&& $store.state.bool==true?'bor':''">
         <div class="left">
           <p class="p1">半全场</p>
         </div>
@@ -91,7 +102,7 @@
         </div>
       </div>
       <h3>比分</h3>
-      <div class="fourth">
+      <div class="fourth" :class="list.single4=='1'&& $store.state.bool==true?'bor':''">
         <div class="sheng">
           <div class="left">
             <p class="p1">胜</p>
@@ -181,7 +192,7 @@
     </div>
     <div class="btn">
       <van-button type="default" size="large" @click="cancel">取消</van-button>
-      <van-button type="danger" size="large" @click="$router.go(-1)">确定</van-button>
+      <van-button type="danger" size="large" @click="confirm">确定</van-button>
     </div>
   </div>
 </template>
@@ -204,22 +215,45 @@ export default {
   },
   watch: {},
   methods: {
+    confirm() {
+      this.$router.push("/racefootball");
+    },
     cancel() {
-    
       this.$router.go(-1);
     },
-    push(i, val) {
-      console.log(this.$store.state.selectResult[this.$route.params.i]);
+    push(ii, val) {
       if (
-        this.$store.state.selectResult[this.$route.params.i][i] == undefined ||
-        this.$store.state.selectResult[this.$route.params.i][i] == ""
+        this.$store.state.selectResult[this.$route.params.i][ii] == undefined ||
+        this.$store.state.selectResult[this.$route.params.i][ii] == ""
       ) {
-        this.$set(this.$store.state.selectResult[this.$route.params.i], i, val);
-        this.$set(this.$store.state.selectValue[this.$route.params.i], i, val);
+        this.$set(
+          this.$store.state.selectResult[this.$route.params.i],
+          ii,
+          val
+        );
+        this.$set(this.$store.state.selectValue[this.$route.params.i], ii, val);
       } else {
-        this.$set(this.$store.state.selectResult[this.$route.params.i], i, "");
-        this.$set(this.$store.state.selectValue[this.$route.params.i], i, "");
+        this.$set(this.$store.state.selectResult[this.$route.params.i], ii, "");
+        this.$set(this.$store.state.selectValue[this.$route.params.i], ii, "");
       }
+      var arr = JSON.parse(JSON.stringify(this.$store.state.selectResult));
+      for (var i = 0; i < arr.length; i++) {
+        for (var j = 0; j < arr[i].length; j++) {
+          if (arr[i][j] == "" || arr[i][j] == undefined) {
+            arr[i].splice(j, 1);
+            j--;
+          }
+        }
+      }
+
+      for (var i = 0; i < arr.length; i++) {
+        if (arr[i].length == 0) {
+          arr.splice(i, 1);
+          i--;
+        }
+      }
+
+      this.$store.state.sumcount = arr.length;
     },
     addColor(i) {
       if (
@@ -236,6 +270,9 @@ export default {
 };
 </script>
 <style lang="less" scoped>
+.bor {
+  border: 1px solid orange;
+}
 .fenxi {
   color: #ffffff;
   font-size: 14px;
@@ -252,6 +289,9 @@ export default {
   }
   .first {
     font-size: 12px;
+    width: 100%;
+    height: 75px;
+
     .left {
       float: left;
       width: 10%;
@@ -269,13 +309,17 @@ export default {
       }
     }
     .right {
-      width: 90%;
+      width: 89%;
       float: left;
+      border: 1px solid #fff;
       ul {
+        // width: 100%;
+
+        height: 37px;
         li {
           display: inline-block;
           height: 35px;
-          width: 32%;
+          width: 32.6%;
           border: 1px solid #eeeeee;
           float: left;
           text-align: center;
@@ -287,6 +331,9 @@ export default {
   }
   .second {
     font-size: 12px;
+    width: 100%;
+    height: 74px;
+
     .left {
       float: left;
       width: 10%;
@@ -310,7 +357,7 @@ export default {
         li {
           display: inline-block;
           height: 35px;
-          width: 24%;
+          width: 24.3%;
           border: 1px solid #eeeeee;
           float: left;
           text-align: center;
@@ -326,6 +373,9 @@ export default {
   }
   .third {
     font-size: 12px;
+    width: 100%;
+    height: 111px;
+
     .left {
       float: left;
       width: 10%;
@@ -349,7 +399,7 @@ export default {
         li {
           display: inline-block;
           height: 35px;
-          width: 32%;
+          width: 32.6%;
           border: 1px solid #eeeeee;
           float: left;
           text-align: center;
@@ -365,6 +415,9 @@ export default {
   }
   .fourth {
     font-size: 12px;
+    width: 100%;
+    height: 259px;
+
     .sheng,
     .fu {
       .left {
@@ -391,7 +444,7 @@ export default {
           li {
             display: inline-block;
             height: 35px;
-            width: 19%;
+            width: 19.3%;
             border: 1px solid #eeeeee;
             float: left;
             text-align: center;
